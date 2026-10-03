@@ -7,7 +7,22 @@ echo " Creating homelab cluster"
 echo "========================================"
 kind create cluster --config=kind-config.yaml
 kubectl label nodes -l '!node-role.kubernetes.io/control-plane' node-role.kubernetes.io/worker=
-docker update --restart=unless-stopped $(docker ps -aq --filter "name=homelab-") 1>/dev/null
+
+echo "========================================"
+echo " Applying node resource limits"
+echo "========================================"
+docker update \
+    --cpus=2 \
+    --memory=2g \
+    --memory-swap=4g \
+    --restart=unless-stopped \
+    $(docker ps -aq --filter "name=homelab-control-plane")
+docker update \
+    --cpus=1 \
+    --memory=2g \
+    --memory-swap=4g \
+    --restart=unless-stopped \
+    $(docker ps -aq --filter "name=homelab-worker")
 
 echo "========================================"
 echo " Installing Calico CNI"
