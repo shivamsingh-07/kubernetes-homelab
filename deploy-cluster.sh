@@ -9,25 +9,15 @@ kind create cluster --config=kind-config.yaml
 kubectl label nodes -l '!node-role.kubernetes.io/control-plane' node-role.kubernetes.io/worker=
 
 echo "========================================"
-echo " Applying node resource limits"
-echo "========================================"
-docker update \
-    --cpus=2 \
-    --memory=2g \
-    --memory-swap=4g \
-    --restart=unless-stopped \
-    $(docker ps -aq --filter "name=homelab-control-plane")
-docker update \
-    --cpus=1 \
-    --memory=2g \
-    --memory-swap=4g \
-    --restart=unless-stopped \
-    $(docker ps -aq --filter "name=homelab-worker")
-
-echo "========================================"
 echo " Installing Calico CNI"
 echo "========================================"
-kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/calico.yaml
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.33.0/manifests/calico.yaml
+kubectl patch ippool.crd.projectcalico.org default-ipv4-ippool \
+    --type=merge \
+    -p '{"spec":{"ipipMode":"Never","vxlanMode":"Always"}}'
+kubectl patch bgpconfiguration.crd.projectcalico.org default \
+    --type=merge \
+    -p '{"spec":{"nodeToNodeMeshEnabled":false}}'
 
 echo "========================================"
 echo " Waiting for cluster to become Ready"
